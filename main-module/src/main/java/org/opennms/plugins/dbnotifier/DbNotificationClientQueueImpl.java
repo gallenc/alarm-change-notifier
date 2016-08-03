@@ -15,11 +15,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  */
 public class DbNotificationClientQueueImpl implements DbNotificationClient{
+
 	private static final Logger LOG = LoggerFactory.getLogger(DbNotificationClientQueueImpl.class);
 
 	private DatabaseChangeNotifier databaseChangeNotifier;
+	
+	private Integer maxQueueLength=1000;
 
-	private LinkedBlockingQueue<DbNotification> queue = new LinkedBlockingQueue<DbNotification>();
+	private LinkedBlockingQueue<DbNotification> queue=null;
 	private AtomicBoolean clientRunning = new AtomicBoolean(false);
 
 	private RemovingConsumer removingConsumer = new RemovingConsumer();
@@ -48,11 +51,21 @@ public class DbNotificationClientQueueImpl implements DbNotificationClient{
 	public DatabaseChangeNotifier getDatabaseChangeNotifier() {
 		return databaseChangeNotifier;
 	}
+	
+	public Integer getMaxQueueLength() {
+		return maxQueueLength;
+	}
+
+	public void setMaxQueueLength(Integer maxQueueLength) {
+		this.maxQueueLength = maxQueueLength;
+	}
 
 	public void init(){
-		LOG.debug("initialising client");
+		LOG.debug("initialising dbNotificationClientQueue with queue size "+maxQueueLength);
 		if (databaseChangeNotifier==null) throw new IllegalStateException("databaseChangeNotifier cannot be null");
-
+		
+		queue= new LinkedBlockingQueue<DbNotification>(maxQueueLength);
+		
 		// start consuming thread
 		clientRunning.set(true);
 		removingConsumerThread.start();
@@ -77,7 +90,10 @@ public class DbNotificationClientQueueImpl implements DbNotificationClient{
 	@Override
 	public void sendDbNotification(DbNotification dbNotification) {
 		if(LOG.isDebugEnabled()) LOG.debug("client received notification - adding notification to queue");
-		queue.add(dbNotification);
+		
+		if (! queue.offer(dbNotification)){
+			LOG.warn("Cannot queue any more dbNotification. dbNotification queue full. size="+queue.size());
+		};
 
 	}
 

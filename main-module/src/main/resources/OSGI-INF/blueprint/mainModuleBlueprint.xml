@@ -1,9 +1,7 @@
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
 
-  <!-- Generated Licence Authenticator Blueprint -->
-  <!-- for productId='alarm-change-notifier/1.0-SNAPSHOT' -->
-
-  <bean id="sayHello" class="org.opennms.plugins.dbnotifier.Temp" destroy-method="destroyMethod">
+  <!-- print startup message to karaf consol -->
+  <bean id="sayHello" class="org.opennms.plugins.dbnotifier.SayHello" destroy-method="destroyMethod">
     <!-- <argument ref="licenceService" /> -->
   </bean>
 
@@ -22,6 +20,7 @@
 
   <bean id="databaseChangeNotifierClient" class="org.opennms.plugins.dbnotifier.DbNotificationClientQueueImpl" init-method="init" destroy-method="destroy">
     <property name="databaseChangeNotifier" ref="databaseChangeNotifier" />
+    <property name="maxQueueLength" value="1000" />
 
     <property name="channelHandlingClients">
       <map>
