@@ -1,9 +1,12 @@
 # Alarm Change Notifier OpenNMS plugin
 
 ## Maven project
+
+~~~~
 project groupId: org.opennms.plugins
 project name:    alarm-change-notifier
 version:         1.0-SNAPSHOT
+~~~~
 
 ## Description
 This project generates new OpenNMS events corresponding to changes in alarms
@@ -25,19 +28,21 @@ Events from the alarm-change-notifier are used by the opennms-es-rest plugin to 
 ## To install on OpenNMS
 
 ### add events definition
-copy /misc AlarmChangeNotifierEvents.xml to <opennms-home>/etc/events
+copy /misc AlarmChangeNotifierEvents.xml to {opennms-home}/etc/events
 
-add the following line to <opennms-home>/etc/events
+add the following line to {opennms-home}/etc/events
 
-     <event-file>events/AlarmChangeNotifierEvents.xml</event-file>
+~~~~
+<event-file>events/AlarmChangeNotifierEvents.xml</event-file>
+~~~~
 
 ### install the plugin
 
 EITHER
 
-Copy the kar file generated in the kar-package module to the <opennms-home>/deploy directory
+Copy the kar file generated in the kar-package module to the {opennms-home}/deploy directory
 
-(You can see if the plugin has deployed on the karaf terminal (see below) or look at the <opennms-home>/data/log/karaf.log)
+(You can see if the plugin has deployed on the karaf terminal (see below) or look at the {opennms-home}/data/log/karaf.log)
 
 OR
 
