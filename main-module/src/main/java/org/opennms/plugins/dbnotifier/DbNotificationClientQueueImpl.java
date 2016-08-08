@@ -103,7 +103,7 @@ public class DbNotificationClientQueueImpl implements DbNotificationClient{
 	 * Class run in separate thread to remove and process notifications from the queue 
 	 */
 	private class RemovingConsumer implements Runnable {
-		final Logger LOG = LoggerFactory.getLogger(DbNotificationClientQueueImpl.class);
+		//TODO final Logger LOG = LoggerFactory.getLogger(DbNotificationClientQueueImpl.class);
 
 		@Override
 		public void run() {
@@ -139,9 +139,6 @@ public class DbNotificationClientQueueImpl implements DbNotificationClient{
 			LOG.debug("shutting down notification consumer thread");
 		}
 	}
-
-
-
 
 }
 

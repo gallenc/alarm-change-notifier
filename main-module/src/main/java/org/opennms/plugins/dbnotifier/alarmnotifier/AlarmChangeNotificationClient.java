@@ -1,6 +1,10 @@
 package org.opennms.plugins.dbnotifier.alarmnotifier;
 
 
+import java.sql.Timestamp;
+import java.util.Calendar;
+
+import javax.xml.bind.DatatypeConverter;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -11,6 +15,7 @@ import org.opennms.netmgt.events.api.EventProxyException;
 import org.opennms.netmgt.model.events.EventBuilder;
 import org.opennms.netmgt.xml.event.Event;
 import org.opennms.core.network.IPAddress;
+import org.opennms.plugins.com.impossibl.postgres.jdbc.TimestampUtils;
 import org.opennms.plugins.dbnotifier.DbNotification;
 import org.opennms.plugins.dbnotifier.NotificationClient;
 import org.slf4j.Logger;
@@ -25,9 +30,9 @@ import org.slf4j.LoggerFactory;
 public class AlarmChangeNotificationClient implements NotificationClient {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(AlarmChangeNotificationClient.class);
-	
+
 	public static final String EVENT_SOURCE_NAME = "AlarmChangeNotifier";
-	
+
 	// uei definitions of alarm change events
 	public static final String ALARM_DELETED_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/AlarmDeleted";
 	public static final String ALARM_CREATED_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/NewAlarmCreated";
@@ -39,6 +44,9 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 	public static final String ALARM_TROUBLETICKET_STATE_CHANGE_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/TroubleTicketStateChange";
 	public static final String ALARM_CHANGED_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/AlarmChanged";
 
+	public static final String OLD_ALARM_VALUES="oldalarmvalues";
+	public static final String NEW_ALARM_VALUES="newalarmvalues";
+	
 	EventProxy eventProxy = null;
 
 	public EventProxy getEventProxy() {
@@ -65,6 +73,9 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 				LOG.debug("payload jsonArray.toString():" + jsonArray.toString());
 				newJsonObject = (JSONObject) jsonArray.get(0);
 				oldJsonObject = (JSONObject) jsonArray.get(1);
+				
+				newJsonObject = jsonAlarmTimeNormaliser(newJsonObject);
+				oldJsonObject = jsonAlarmTimeNormaliser(oldJsonObject);
 
 			} catch (ParseException e1) {
 				throw new RuntimeException("cannot parse notification payload to json object. payload="+ payload, e1);
@@ -79,15 +90,15 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 							new EventBuilder( ALARM_DELETED_EVENT, EVENT_SOURCE_NAME));
 
 					//copy in all values as json in params
-					eb.addParam("oldalarmvalues",oldJsonObject.toString());
-					eb.addParam("newalarmvalues",newJsonObject.toString());
+					eb.addParam(OLD_ALARM_VALUES,oldJsonObject.toString());
+					eb.addParam(NEW_ALARM_VALUES,newJsonObject.toString());
 
 					sendEvent(eb.getEvent());
 				}
 
 			} else if ( (! newJsonObject.isEmpty()) && oldJsonObject.isEmpty()){
 				// received an alarm create
-				
+
 				// ignore alarm type 2
 				if(! "2".equals(newJsonObject.get("alarmtype").toString())) {
 					if (LOG.isDebugEnabled()) LOG.debug("alarm created alarmid="+newJsonObject.get("alarmid"));
@@ -95,8 +106,8 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 							new EventBuilder( ALARM_CREATED_EVENT, EVENT_SOURCE_NAME));
 
 					//copy in all values as json in params
-					eb.addParam("oldalarmvalues",oldJsonObject.toString());
-					eb.addParam("newalarmvalues",newJsonObject.toString());
+					eb.addParam(OLD_ALARM_VALUES,oldJsonObject.toString());
+					eb.addParam(NEW_ALARM_VALUES,newJsonObject.toString());
 
 					sendEvent(eb.getEvent());
 				}
@@ -132,8 +143,8 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 							eb.addParam("oldseverity",oldseverity);
 
 							//copy in all values as json in params
-							eb.addParam("oldalarmvalues",oldJsonObject.toString());
-							eb.addParam("newalarmvalues",newJsonObject.toString());
+							eb.addParam(OLD_ALARM_VALUES,oldJsonObject.toString());
+							eb.addParam(NEW_ALARM_VALUES,newJsonObject.toString());
 
 							sendEvent(eb.getEvent());
 						}
@@ -149,8 +160,8 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 									new EventBuilder( ALARM_ACKNOWLEDGED_EVENT, EVENT_SOURCE_NAME));
 
 							//copy in all values as json in params
-							eb.addParam("oldalarmvalues",oldJsonObject.toString());
-							eb.addParam("newalarmvalues",newJsonObject.toString());
+							eb.addParam(OLD_ALARM_VALUES,oldJsonObject.toString());
+							eb.addParam(NEW_ALARM_VALUES,newJsonObject.toString());
 
 							sendEvent(eb.getEvent());
 
@@ -164,8 +175,8 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 										new EventBuilder( ALARM_UNACKNOWLEDGED_EVENT, EVENT_SOURCE_NAME));
 
 								//copy in all values as json in params
-								eb.addParam("oldalarmvalues",oldJsonObject.toString());
-								eb.addParam("newalarmvalues",newJsonObject.toString());
+								eb.addParam(OLD_ALARM_VALUES,oldJsonObject.toString());
+								eb.addParam(NEW_ALARM_VALUES,newJsonObject.toString());
 
 								sendEvent(eb.getEvent());
 							}
@@ -183,8 +194,8 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 									new EventBuilder( ALARM_SUPPRESSED_EVENT, EVENT_SOURCE_NAME));
 
 							//copy in all values as json in params
-							eb.addParam("oldalarmvalues",oldJsonObject.toString());
-							eb.addParam("newalarmvalues",newJsonObject.toString());
+							eb.addParam(OLD_ALARM_VALUES,oldJsonObject.toString());
+							eb.addParam(NEW_ALARM_VALUES,newJsonObject.toString());
 
 							sendEvent(eb.getEvent());
 
@@ -200,19 +211,19 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 												EVENT_SOURCE_NAME));
 
 								//copy in all values as json in params
-								eb.addParam("oldalarmvalues",oldJsonObject.toString());
-								eb.addParam("newalarmvalues",newJsonObject.toString());
+								eb.addParam(OLD_ALARM_VALUES,oldJsonObject.toString());
+								eb.addParam(NEW_ALARM_VALUES,newJsonObject.toString());
 
 								sendEvent(eb.getEvent());
 							}
 						}
-						
+
 						// trouble ticket state changed notification
 						String oldtticketid= (oldJsonObject.get("tticketid")==null) ? null : oldJsonObject.get("tticketid").toString();
 						String newtticketid= (newJsonObject.get("tticketid")==null) ? null : newJsonObject.get("tticketid").toString();
 						String oldtticketstate= (oldJsonObject.get("tticketstate")==null) ? null : oldJsonObject.get("tticketstate").toString();
 						String newtticketstate= (newJsonObject.get("tticketstate")==null) ? null : newJsonObject.get("tticketstate").toString();
-						
+
 						if ( (oldtticketid==null && newtticketid !=null)
 								|| (oldtticketid !=null && ! newtticketid.equals(oldtticketid))
 								|| (oldtticketstate ==null &&  newtticketstate!=null) 
@@ -230,8 +241,8 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 							eb.addParam("tticketstate",newtticketstate);
 
 							//copy in all values as json in params
-							eb.addParam("oldalarmvalues",oldJsonObject.toString());
-							eb.addParam("newalarmvalues",newJsonObject.toString());
+							eb.addParam(OLD_ALARM_VALUES,oldJsonObject.toString());
+							eb.addParam(NEW_ALARM_VALUES,newJsonObject.toString());
 
 							sendEvent(eb.getEvent());
 						}
@@ -259,8 +270,8 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 									new EventBuilder( ALARM_CHANGED_EVENT, EVENT_SOURCE_NAME));
 
 							//copy in all values as json in params
-							eb.addParam("oldalarmvalues",oldJsonObject.toString());
-							eb.addParam("newalarmvalues",newJsonObject.toString());
+							eb.addParam(OLD_ALARM_VALUES,oldJsonObject.toString());
+							eb.addParam(NEW_ALARM_VALUES,newJsonObject.toString());
 
 							sendEvent(eb.getEvent());
 						}
@@ -343,6 +354,82 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 					"event proxy problem sending AlarmChangeNotificationEvent to OpenNMS:",
 					ex);
 		}
+	}
+
+	/**
+	 * concerts all time values into a normalised time in alarm json object from database
+	 * example timestamps to translate
+	 *  {
+	 *    "suppressedtime":"2016-08-04 16:11:16.01+01",
+	 *    "suppresseduntil":"2016-08-04 16:11:16.01+01",
+	 *    "lasteventtime":"2016-08-04 16:11:16.01+01",
+	 *    "alarmacktime":"2016-08-04 07:34:04.617+01",
+	 *    "firsteventtime":"2016-08-04 16:11:16.01+01",
+	 *    "firstautomationtime":"2016-08-04 16:12:03.272205+01",
+	 *    "lastautomationtime":"2016-08-04 16:12:03.272205+01"
+	 *  }
+	 * @param jsonObject
+	 * @return
+	 */
+	public JSONObject jsonAlarmTimeNormaliser(JSONObject jsonObject){
+		
+		if(jsonObject.isEmpty()) return jsonObject;
+
+		String suppressedtime= (jsonObject.get("suppressedtime")==null) ? null : timeNormaliser(jsonObject.get("suppressedtime").toString());
+		if (suppressedtime!=null) jsonObject.put("suppressedtime", suppressedtime);
+		
+		String suppresseduntil= (jsonObject.get("suppresseduntil")==null) ? null : timeNormaliser(jsonObject.get("suppresseduntil").toString());
+		if (suppresseduntil!=null) jsonObject.put("suppresseduntil", suppresseduntil);
+		
+		String lasteventtime= (jsonObject.get("lasteventtime")==null) ? null : timeNormaliser(jsonObject.get("lasteventtime").toString());
+		if (lasteventtime!=null) jsonObject.put("lasteventtime", lasteventtime);
+		
+		String alarmacktime= (jsonObject.get("alarmacktime")==null) ? null : timeNormaliser(jsonObject.get("alarmacktime").toString());
+		if (alarmacktime!=null) jsonObject.put("alarmacktime", alarmacktime);
+		
+		String firsteventtime= (jsonObject.get("firsteventtime")==null) ? null : timeNormaliser(jsonObject.get("firsteventtime").toString());
+		if (firsteventtime!=null) jsonObject.put("firsteventtime", firsteventtime);
+		
+		String firstautomationtime= (jsonObject.get("firstautomationtime")==null) ? null : timeNormaliser(jsonObject.get("firstautomationtime").toString());
+		if (firstautomationtime!=null) jsonObject.put("firstautomationtime", firstautomationtime);
+		
+		String lastautomationtime= (jsonObject.get("lastautomationtime")==null) ? null : timeNormaliser(jsonObject.get("lastautomationtime").toString());
+		if (lastautomationtime!=null) jsonObject.put("lastautomationtime", lastautomationtime);
+		
+		return jsonObject;
+	}
+
+	/**
+	 * converts postgres json time format to normalised time format for matching to Elastic Search 
+	 * date_optional_time or strict_date_optional_time
+	 * (A generic ISO datetime parser where the date is mandatory and the time is optional
+	 * see https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-date-format.html#strict-date-time) 
+	 * @param dbTimeStr
+	 * @return
+	 */
+	public String timeNormaliser(String dbTimeStr){
+		String normalisedTimeStr=null;
+
+		Calendar alarmCreationCal=null;
+		TimestampUtils timestampUtils= new TimestampUtils();
+		Timestamp timestamp;
+		try {
+			timestamp = timestampUtils.toTimestamp(null, dbTimeStr);
+			// using DatatypeConverter.printDateTime
+			alarmCreationCal=Calendar.getInstance();
+			alarmCreationCal.setTime(timestamp);
+			normalisedTimeStr=  DatatypeConverter.printDateTime(alarmCreationCal);
+			
+			//alternative using simple date format
+			//final String TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
+			//SimpleDateFormat simpleDateFormat = new SimpleDateFormat(TIME_FORMAT); 
+			//timeStr=  simpleDateFormat.format(timestamp);
+
+		} catch (Exception e) {
+			LOG.error("cannot parse database json time string dbTimeStr"+dbTimeStr, e);
+		}
+		return normalisedTimeStr;
+
 	}
 
 
