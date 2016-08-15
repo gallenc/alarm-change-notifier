@@ -47,6 +47,8 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 	public static final String OLD_ALARM_VALUES="oldalarmvalues";
 	public static final String NEW_ALARM_VALUES="newalarmvalues";
 	
+	public static final String INITIAL_SEVERITY="initialseverity";
+
 	EventProxy eventProxy = null;
 
 	public EventProxy getEventProxy() {
@@ -73,7 +75,7 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 				LOG.debug("payload jsonArray.toString():" + jsonArray.toString());
 				newJsonObject = (JSONObject) jsonArray.get(0);
 				oldJsonObject = (JSONObject) jsonArray.get(1);
-				
+
 				newJsonObject = jsonAlarmTimeNormaliser(newJsonObject);
 				oldJsonObject = jsonAlarmTimeNormaliser(oldJsonObject);
 
@@ -109,6 +111,16 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 					eb.addParam(OLD_ALARM_VALUES,oldJsonObject.toString());
 					eb.addParam(NEW_ALARM_VALUES,newJsonObject.toString());
 
+					// set initial severity to new alarm severity
+					if (newJsonObject.get("severity")!=null) {
+						try{
+							String newseverity= newJsonObject.get("severity").toString();
+							Integer newsvty= Integer.valueOf(newseverity);
+							eb.addParam(INITIAL_SEVERITY,newsvty.toString());
+						} catch (Exception e){
+							LOG.error("problem parsing initial severity for new alarm event newJsonObject="+newJsonObject,e);
+						}
+					}
 					sendEvent(eb.getEvent());
 				}
 			} else {
@@ -135,6 +147,7 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 						// severity changed notification
 						String oldseverity= (oldJsonObject.get("severity")==null) ? null : oldJsonObject.get("severity").toString();
 						String newseverity= (newJsonObject.get("severity")==null) ? null : newJsonObject.get("severity").toString();
+
 						if (newseverity !=null && ! newseverity.equals(oldseverity)){
 							if (LOG.isDebugEnabled()) LOG.debug("alarm severity changed alarmid="+oldJsonObject.get("alarmid")
 									+" old severity="+oldseverity+" new severity="+newseverity);
@@ -372,30 +385,30 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 	 * @return
 	 */
 	public JSONObject jsonAlarmTimeNormaliser(JSONObject jsonObject){
-		
+
 		if(jsonObject.isEmpty()) return jsonObject;
 
 		String suppressedtime= (jsonObject.get("suppressedtime")==null) ? null : timeNormaliser(jsonObject.get("suppressedtime").toString());
 		if (suppressedtime!=null) jsonObject.put("suppressedtime", suppressedtime);
-		
+
 		String suppresseduntil= (jsonObject.get("suppresseduntil")==null) ? null : timeNormaliser(jsonObject.get("suppresseduntil").toString());
 		if (suppresseduntil!=null) jsonObject.put("suppresseduntil", suppresseduntil);
-		
+
 		String lasteventtime= (jsonObject.get("lasteventtime")==null) ? null : timeNormaliser(jsonObject.get("lasteventtime").toString());
 		if (lasteventtime!=null) jsonObject.put("lasteventtime", lasteventtime);
-		
+
 		String alarmacktime= (jsonObject.get("alarmacktime")==null) ? null : timeNormaliser(jsonObject.get("alarmacktime").toString());
 		if (alarmacktime!=null) jsonObject.put("alarmacktime", alarmacktime);
-		
+
 		String firsteventtime= (jsonObject.get("firsteventtime")==null) ? null : timeNormaliser(jsonObject.get("firsteventtime").toString());
 		if (firsteventtime!=null) jsonObject.put("firsteventtime", firsteventtime);
-		
+
 		String firstautomationtime= (jsonObject.get("firstautomationtime")==null) ? null : timeNormaliser(jsonObject.get("firstautomationtime").toString());
 		if (firstautomationtime!=null) jsonObject.put("firstautomationtime", firstautomationtime);
-		
+
 		String lastautomationtime= (jsonObject.get("lastautomationtime")==null) ? null : timeNormaliser(jsonObject.get("lastautomationtime").toString());
 		if (lastautomationtime!=null) jsonObject.put("lastautomationtime", lastautomationtime);
-		
+
 		return jsonObject;
 	}
 
@@ -419,7 +432,7 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 			alarmCreationCal=Calendar.getInstance();
 			alarmCreationCal.setTime(timestamp);
 			normalisedTimeStr=  DatatypeConverter.printDateTime(alarmCreationCal);
-			
+
 			//alternative using simple date format
 			//final String TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSX";
 			//SimpleDateFormat simpleDateFormat = new SimpleDateFormat(TIME_FORMAT); 
