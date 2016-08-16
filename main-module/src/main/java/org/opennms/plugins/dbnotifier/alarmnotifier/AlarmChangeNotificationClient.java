@@ -131,7 +131,7 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 				// ignore alarm type 2
 				if(! "2".equals(newJsonObject.get("alarmtype").toString())) {
 
-					// ignore event count changes if only change in alarm
+					// ignore event count and automation changes if these are only change in alarm
 					// TODO need database trigger to also ignore these changes
 					JSONObject newobj = new JSONObject(newJsonObject);
 					JSONObject oldobj = new JSONObject(oldJsonObject);
@@ -141,6 +141,10 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 					oldobj.remove("lasteventid");
 					newobj.remove("counter");
 					oldobj.remove("counter");
+					newobj.remove("firstautomationtime");
+					oldobj.remove("firstautomationtime");
+					newobj.remove("lastautomationtime");
+					oldobj.remove("lastautomationtime");
 
 					if (! newobj.toString().equals(oldobj.toString())){
 						// changes other than event count
