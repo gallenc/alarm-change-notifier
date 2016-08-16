@@ -37,6 +37,7 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 	public static final String ALARM_DELETED_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/AlarmDeleted";
 	public static final String ALARM_CREATED_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/NewAlarmCreated";
 	public static final String ALARM_SEVERITY_CHANGED_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/AlarmSeverityChanged";
+	public static final String ALARM_CLEARED_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/AlarmCleared";
 	public static final String ALARM_ACKNOWLEDGED_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/AlarmAcknowledged";
 	public static final String ALARM_UNACKNOWLEDGED_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/AlarmUnAcknowledged";
 	public static final String ALARM_SUPPRESSED_EVENT = "uei.opennms.org/plugin/AlarmChangeNotificationEvent/AlarmSuppressed";
@@ -149,10 +150,21 @@ public class AlarmChangeNotificationClient implements NotificationClient {
 						String newseverity= (newJsonObject.get("severity")==null) ? null : newJsonObject.get("severity").toString();
 
 						if (newseverity !=null && ! newseverity.equals(oldseverity)){
-							if (LOG.isDebugEnabled()) LOG.debug("alarm severity changed alarmid="+oldJsonObject.get("alarmid")
-									+" old severity="+oldseverity+" new severity="+newseverity);
-							EventBuilder eb= jsonAlarmToEventBuilder(newJsonObject, 
-									new EventBuilder( ALARM_SEVERITY_CHANGED_EVENT, EVENT_SOURCE_NAME));
+							
+							// check if alarm cleared
+							EventBuilder eb=null;
+							if("2".equals(newseverity)){
+								if (LOG.isDebugEnabled()) LOG.debug("alarm cleared alarmid="+oldJsonObject.get("alarmid")
+										+" old severity="+oldseverity+" new severity="+newseverity);
+								eb= jsonAlarmToEventBuilder(newJsonObject, 
+										new EventBuilder( ALARM_CLEARED_EVENT, EVENT_SOURCE_NAME));
+							} else {
+								// if just severity changed
+								if (LOG.isDebugEnabled()) LOG.debug("alarm severity changed alarmid="+oldJsonObject.get("alarmid")
+										+" old severity="+oldseverity+" new severity="+newseverity);
+								eb= jsonAlarmToEventBuilder(newJsonObject, 
+										new EventBuilder( ALARM_SEVERITY_CHANGED_EVENT, EVENT_SOURCE_NAME));
+							}
 							eb.addParam("oldseverity",oldseverity);
 
 							//copy in all values as json in params

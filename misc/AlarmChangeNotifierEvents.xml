@@ -33,6 +33,25 @@
   </event>
 
   <event>
+    <uei>uei.opennms.org/plugin/AlarmChangeNotificationEvent/AlarmCleared</uei>
+    <event-label>Alarm Change Notification Event : Alarm Cleared</event-label>
+    <descr>
+    &lt;p&gt;Alarm &lt;a href="/opennms/alarm/detail.htm?id=%parm[alarmid]%"&gt;%parm[alarmid]%&lt;/a&gt; Cleared&lt;p&gt;
+    
+    &lt;p&gt;New Alarm Values&lt;p&gt;
+    &lt;p&gt;%parm[newalarmvalues]%&lt;p&gt;
+    
+    &lt;p&gt;Old Alarm Values&lt;p&gt;
+    &lt;p&gt;%parm[oldalarmvalues]%&lt;p&gt;
+    </descr>
+    <logmsg dest="logndisplay">
+    &lt;p&gt;Alarm &lt;a href="/opennms/alarm/detail.htm?id=%parm[alarmid]%"&gt;%parm[alarmid]%&lt;/a&gt; Cleared&lt;p&gt;
+    </logmsg>
+    <severity>Normal</severity>
+    <operinstruct></operinstruct>
+  </event>
+  
+  <event>
     <uei>uei.opennms.org/plugin/AlarmChangeNotificationEvent/AlarmChanged</uei>
     <event-label>Alarm Change Notification Event : Alarm Changed</event-label>
     <descr>
