@@ -142,8 +142,10 @@ public class DatabaseChangeNotifier {
 	 * @param paramList
 	 * @throws Throwable
 	 */
-	public DatabaseChangeNotifier(DataSource dataSource, List<String> paramList) throws Throwable {
+	public DatabaseChangeNotifier(DbNotifierDataSourceFactory dsFactory, List<String> paramList) throws Throwable {
 
+		DataSource dataSource=dsFactory.getPGDataSource();
+		
 		if(LOG.isDebugEnabled()) {
 			String s="DatabaseChangeNotifier Paramaters: ";
 

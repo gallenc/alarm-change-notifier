@@ -9,14 +9,18 @@
   <!-- note optional so that we can run tests outside of opennms -->
   <reference id="eventProxy" interface="org.opennms.netmgt.events.api.EventProxy" availability="optional" timeout="100" />
 
-
-  <bean id="pgDataSource" class="com.impossibl.postgres.jdbc.PGDataSource">
-    <property name="host" value="localhost" />
-    <property name="port" value="5432" />
-    <property name="database" value="opennms" />
-    <property name="user" value="opennms" />
-    <property name="password" value="opennms" />
+  <bean id="pgDataSourceFactory" class="org.opennms.plugins.dbnotifier.DbNotifierDataSourceFactory" init-method="init">
+    <property name="dataSourceFileUri" value="./etc/opennms-datasources.xml" />
   </bean>
+
+<!-- TODO REMOVE -->
+<!--   <bean id="pgDataSource" class="com.impossibl.postgres.jdbc.PGDataSource"> -->
+<!--     <property name="host" value="localhost" /> -->
+<!--     <property name="port" value="5432" /> -->
+<!--     <property name="database" value="opennms" /> -->
+<!--     <property name="user" value="opennms" /> -->
+<!--     <property name="password" value="opennms" /> -->
+<!--   </bean> -->
 
   <bean id="databaseChangeNotifierClient" class="org.opennms.plugins.dbnotifier.DbNotificationClientQueueImpl" init-method="init" destroy-method="destroy">
     <property name="databaseChangeNotifier" ref="databaseChangeNotifier" />
@@ -41,7 +45,7 @@
 
   <!-- DatabaseChangeNotifier(DataSource dataSource, List<String> paramList) -->
   <bean id="databaseChangeNotifier" class="org.opennms.plugins.dbnotifier.DatabaseChangeNotifier" init-method="init" destroy-method="destroy">
-    <argument index="0" ref="pgDataSource" />
+    <argument index="0" ref="pgDataSourceFactory" />
 
     <argument index="1">
       <list>

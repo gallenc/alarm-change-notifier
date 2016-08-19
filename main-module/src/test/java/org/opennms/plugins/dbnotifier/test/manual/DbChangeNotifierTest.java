@@ -1,21 +1,17 @@
 package org.opennms.plugins.dbnotifier.test.manual;
 
-import static org.junit.Assert.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.*;
 import org.junit.Test;
 
-import com.impossibl.postgres.jdbc.PGDataSource;
-
 import org.opennms.plugins.dbnotifier.DatabaseChangeNotifier;
-import org.opennms.plugins.dbnotifier.DbNotificationClient;
 import org.opennms.plugins.dbnotifier.DbNotificationClientQueueImpl;
+import org.opennms.plugins.dbnotifier.DbNotifierDataSourceFactory;
 import org.opennms.plugins.dbnotifier.NotificationClient;
-import org.opennms.plugins.dbnotifier.VerySimpleNotificationClient;
 import org.opennms.plugins.dbnotifier.alarmnotifier.AlarmChangeNotificationClient;
 
 
@@ -24,14 +20,23 @@ public class DbChangeNotifierTest {
 	@Test
 	public void test1() {
 		System.out.println("Starting DbChangeNotifierTest test1");
-
-		PGDataSource pgDataSource = new PGDataSource();
 		
-		pgDataSource.setHost("localhost");
-		pgDataSource.setPort(5432);
-		pgDataSource.setDatabase("opennms");
-		pgDataSource.setUser("opennms");
-		pgDataSource.setPassword("opennms");
+		DbNotifierDataSourceFactory dsFactory = new DbNotifierDataSourceFactory();
+		
+		dsFactory.setDataBaseName("opennms");
+		dsFactory.setUserName("opennms");
+		dsFactory.setPassWord("opennms");
+		dsFactory.setHostname("localhost");
+		dsFactory.setPort("5432");
+
+// TODO remove
+//		PGDataSource pgDataSource = new PGDataSource();
+//		
+//		pgDataSource.setHost("localhost");
+//		pgDataSource.setPort(5432);
+//		pgDataSource.setDatabase("opennms");
+//		pgDataSource.setUser("opennms");
+//		pgDataSource.setPassword("opennms");
 
 		DatabaseChangeNotifier dbChangeNotifier = null;
 
@@ -43,7 +48,7 @@ public class DbChangeNotifierTest {
 			paramList.add(DatabaseChangeNotifier.NOTIFY_EVENT_CHANGES);
 			paramList.add(DatabaseChangeNotifier.NOTIFY_ALARM_CHANGES);
 			
-			dbChangeNotifier = new DatabaseChangeNotifier(pgDataSource,paramList);
+			dbChangeNotifier = new DatabaseChangeNotifier(dsFactory,paramList);
 			
 			DbNotificationClientQueueImpl dbNotificationQueueClient= new DbNotificationClientQueueImpl();
 			
